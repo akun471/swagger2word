@@ -14,8 +14,15 @@ import java.util.List;
  */
 @Data
 public class ModelAttr implements Serializable {
+	public String getRemark() {
+		return remark;
+	}
 
-    public String getClassName() {
+	public void setRemark(String remark) {
+		this.remark = remark;
+	}
+
+	public String getClassName() {
 		return className;
 	}
 
@@ -97,6 +104,10 @@ public class ModelAttr implements Serializable {
      * 属性描述
      */
     private String description;
+	/**
+     * 属性描述
+     */
+    private String remark;
     /**
      * 嵌套属性列表
      */

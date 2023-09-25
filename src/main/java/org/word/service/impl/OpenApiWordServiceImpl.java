@@ -1,5 +1,6 @@
 package org.word.service.impl;
 
+import cn.hutool.json.JSONUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -49,7 +50,7 @@ public class OpenApiWordServiceImpl implements OpenApiWordService {
         try {
             String jsonStr = restTemplate.getForObject(swaggerUrl, String.class);
             resultMap = tableListFromString(jsonStr);
-            // log.debug(JsonUtils.writeJsonStr(resultMap));
+            // log.debug(JSONUtil.toJsonPrettyStr(resultMap));
         } catch (Exception e) {
             log.error("parse error", e);
         }
@@ -66,7 +67,7 @@ public class OpenApiWordServiceImpl implements OpenApiWordService {
             resultMap.put("tableMap", new TreeMap<>(tableMap));
             resultMap.put("info", map.get("info"));
 
-            // log.debug(JsonUtils.writeJsonStr(resultMap));
+            // log.debug(JSONUtil.toJsonPrettyStr(resultMap));
         } catch (Exception e) {
             log.error("parse error", e);
         	throw e;
@@ -80,7 +81,7 @@ public class OpenApiWordServiceImpl implements OpenApiWordService {
         try {
             String jsonStr = new String(jsonFile.getBytes());
             resultMap = tableListFromString(jsonStr);
-            // log.debug(JsonUtils.writeJsonStr(resultMap));
+            // log.debug(JSONUtil.toJsonPrettyStr(resultMap));
         } catch (Exception e) {
             log.error("parse error", e);
         	throw e;
@@ -250,7 +251,7 @@ public class OpenApiWordServiceImpl implements OpenApiWordService {
                 Map<String, String> schema1 = (Map) param.get("schema");
 
                 request.setType(schema1 == null ? " " : schema1.get("type").toString());
-                // request.setType(param.get("type") == null ? "object" : param.get("type").toString());
+                // request.setType(param.get("type") == null ? "Object" : param.get("type").toString());
                 if (param.get("format") != null) {
                     request.setType(request.getType() + "(" + param.get("format") + ")");
                 }
@@ -260,9 +261,9 @@ public class OpenApiWordServiceImpl implements OpenApiWordService {
                     Map<String, Object> schema = (Map) param.get("schema");
                     Object ref = schema.get("$ref");
                     // 数组情况另外处理
-                    if (schema.get("type") != null && "array".equals(schema.get("type"))) {
+                    if (schema.get("type") != null && "List".equals(schema.get("type"))) {
                         ref = ((Map) schema.get("items")).get("$ref");
-                        request.setType("array");
+                        request.setType("List");
                     }
                     if (ref != null) {
                         request.setType(request.getType() + ":" + ref.toString().replaceAll("#/definitions/", ""));
@@ -303,13 +304,13 @@ public class OpenApiWordServiceImpl implements OpenApiWordService {
 
                     Object ref = schema.get("$ref");
 
-                    if (schema.get("type") != null && "array".equals(schema.get("type"))) {
+                    if (schema.get("type") != null && "List".equals(schema.get("type"))) {
                         ref = ((Map) schema.get("items")).get("$ref");
-                        request.setType("array");
+                        request.setType("List");
                     }
                     if (ref != null) {
                         // request.setType(request.getType() + ":" + ref.toString().replaceAll("#/definitions/", ""));
-                        request.setType("object");
+                        request.setType("Object");
                         request.setModelAttr(definitinMap.get(ref));
                     }
                     if (schema.get("properties") != null) {
@@ -409,7 +410,7 @@ public class OpenApiWordServiceImpl implements OpenApiWordService {
                 String type = (String) schema.get("type");
                 String ref = null;
                 //数组
-                if ("array".equals(type)) {
+                if ("List".equals(type)) {
                     Map<String, Object> items = (Map<String, Object>) schema.get("items");
                     if (items != null && items.get("$ref") != null) {
                         ref = (String) items.get("$ref");
@@ -507,7 +508,7 @@ public class OpenApiWordServiceImpl implements OpenApiWordService {
                 if (attrInfoMap.get("format") != null) {
                     child.setType(child.getType() + "(" + attrInfoMap.get("format") + ")");
                 }
-                child.setType(StringUtils.defaultIfBlank(child.getType(), "object"));
+                child.setType(StringUtils.defaultIfBlank(child.getType(), "Object"));
 
                 Object ref = attrInfoMap.get("$ref");
                 Object items = attrInfoMap.get("items");
@@ -549,7 +550,7 @@ public class OpenApiWordServiceImpl implements OpenApiWordService {
         ModelAttr modeAttr = new ModelAttr();
         Map<String, Object> modeProperties = (Map<String, Object>) schemaMap.get("properties");
 
-        if ("array".equals(schemaMap.get("type"))) {
+        if ("List".equals(schemaMap.get("type"))) {
             Map items = (Map<String, Object>) schemaMap.get("items");
 
             if (items != null) {
@@ -573,7 +574,7 @@ public class OpenApiWordServiceImpl implements OpenApiWordService {
             if (attrInfoMap.get("format") != null) {
                 child.setType(child.getType() + "(" + attrInfoMap.get("format") + ")");
             }
-            child.setType(StringUtils.defaultIfBlank(child.getType(), "object"));
+            child.setType(StringUtils.defaultIfBlank(child.getType(), "Object"));
 
             Object properties = attrInfoMap.get("properties");
             Object ref = attrInfoMap.get("$ref");
@@ -611,7 +612,7 @@ public class OpenApiWordServiceImpl implements OpenApiWordService {
         ModelAttr modeAttr = new ModelAttr();
         Map<String, Object> modeProperties = (Map<String, Object>) schemaMap.get("properties");
 
-        if ("array".equals(schemaMap.get("type"))) {
+        if ("List".equals(schemaMap.get("type"))) {
             Map items = (Map<String, Object>) schemaMap.get("items");
 
             if (items != null) {
@@ -636,7 +637,7 @@ public class OpenApiWordServiceImpl implements OpenApiWordService {
             if (attrInfoMap.get("format") != null) {
                 child.setType(child.getType() + "(" + attrInfoMap.get("format") + ")");
             }
-            child.setType(StringUtils.defaultIfBlank(child.getType(), "object"));
+            child.setType(StringUtils.defaultIfBlank(child.getType(), "Object"));
 
             Object properties = attrInfoMap.get("properties");
             Object ref = attrInfoMap.get("$ref");
@@ -677,7 +678,7 @@ public class OpenApiWordServiceImpl implements OpenApiWordService {
                         String type = (String) schema.get("type");
                         String ref = null;
                         // 数组
-                        if ("array".equals(type)) {
+                        if ("List".equals(type)) {
                             Map<String, Object> items = (Map<String, Object>) schema.get("items");
                             if (items != null && items.get("$ref") != null) {
                                 ref = (String) items.get("$ref");
@@ -694,7 +695,7 @@ public class OpenApiWordServiceImpl implements OpenApiWordService {
                                 for (ModelAttr subModelAttr : modelAttr.getProperties()) {
                                     responseMap.put(subModelAttr.getName(), getValue(subModelAttr.getType(), subModelAttr));
                                 }
-                                return JsonUtils.writeJsonStr(responseMap);
+                                return JSONUtil.toJsonPrettyStr(responseMap).replaceAll("\n", "\n");
                             }
                         }
                         if (schema.get("properties") != null) {
@@ -704,7 +705,7 @@ public class OpenApiWordServiceImpl implements OpenApiWordService {
                                 for (ModelAttr subModelAttr : modelAttr.getProperties()) {
                                     responseMap.put(subModelAttr.getName(), getValue(subModelAttr.getType(), subModelAttr));
                                 }
-                                return JsonUtils.writeJsonStr(responseMap);
+                                return JSONUtil.toJsonPrettyStr(responseMap).replaceAll("\n", "\n");
                             }
                         }
                     }
@@ -732,7 +733,7 @@ public class OpenApiWordServiceImpl implements OpenApiWordService {
 
                             if (responseData != null) {
                                 Object value = responseData.get("value");
-                                return JsonUtils.writeJsonStr(value);
+                                return JSONUtil.toJsonPrettyStr(value).replaceAll("\n", "\n");
                             }
                         } else {
                             return "";
@@ -790,10 +791,10 @@ public class OpenApiWordServiceImpl implements OpenApiWordService {
         if (!jsonMap.isEmpty()) {
             if (jsonMap.size() == 1) {
                 for (Entry<String, Object> entry : jsonMap.entrySet()) {
-                    res += " '" + JsonUtils.writeJsonStr(entry.getValue()) + "'";
+                    res += " '" + JSONUtil.toJsonPrettyStr(entry.getValue()).replaceAll("\n", "\n") + "'";
                 }
             } else {
-                res += " '" + JsonUtils.writeJsonStr(jsonMap) + "'";
+                res += " '" + JSONUtil.toJsonPrettyStr(jsonMap).replaceAll("\n", "\n") + "'";
             }
         }
         return res;
@@ -815,7 +816,7 @@ public class OpenApiWordServiceImpl implements OpenApiWordService {
             case "string":
                 return "string";
             case "string(date-time)":
-                return "2020/01/01 00:00:00";
+                return "2023/01/01 00:00:00";
             case "integer":
             case "integer(int64)":
             case "integer(int32)":
@@ -826,7 +827,7 @@ public class OpenApiWordServiceImpl implements OpenApiWordService {
                 return true;
             case "file":
                 return "(binary)";
-            case "array":
+            case "List":
                 List list = new ArrayList();
                 Map<String, Object> map = new LinkedHashMap<>();
                 if (modelAttr != null && !CollectionUtils.isEmpty(modelAttr.getProperties())) {
@@ -836,7 +837,7 @@ public class OpenApiWordServiceImpl implements OpenApiWordService {
                 }
                 list.add(map);
                 return list;
-            case "object":
+            case "Object":
                 map = new LinkedHashMap<>();
                 if (modelAttr != null && !CollectionUtils.isEmpty(modelAttr.getProperties())) {
                     for (ModelAttr subModelAttr : modelAttr.getProperties()) {

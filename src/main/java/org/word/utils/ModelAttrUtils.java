@@ -37,7 +37,7 @@ public class ModelAttrUtils {
                 if (attrInfoMap.get("format") != null) {
                     child.setType(child.getType() + "(" + attrInfoMap.get("format") + ")");
                 }
-                child.setType(StringUtils.defaultIfBlank(child.getType(), "object"));
+                child.setType(StringUtils.defaultIfBlank(child.getType(), "Object"));
 
                 Object ref = attrInfoMap.get("$ref");
                 Object items = attrInfoMap.get("items");

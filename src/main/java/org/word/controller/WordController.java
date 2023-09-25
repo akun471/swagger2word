@@ -97,7 +97,7 @@ public class WordController {
     private void writeContentToResponse(Model model, HttpServletResponse response) {
         Context context = new Context();
         context.setVariables(model.asMap());
-        String content = springTemplateEngine.process("word", context);
+        String content = springTemplateEngine.process("word-zh_CN", context);
         response.setContentType("application/octet-stream;charset=utf-8");
         response.setCharacterEncoding("utf-8");
         try (BufferedOutputStream bos = new BufferedOutputStream(response.getOutputStream())) {

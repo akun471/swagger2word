@@ -3,12 +3,17 @@
 <head>
     <meta http-equiv="Content-Type" content="application/msword; charset=utf-8"/>
     <title>toWord</title>
-        <style type="text/css">
+    <style type="text/css">
         .bg {
             font-size: 14.5px;
             font-weight: bold;
-            color: #000;
-            background-color: #559e68;
+            color: #FFFFFF;
+            background-color: #0070C0;
+        }
+
+        .bg2 {
+            font-size: 14.5px;
+            font-weight: bold;
         }
 
         table {
@@ -74,6 +79,17 @@
         body {
             font-family: 思源黑体 Normal;
         }
+
+        pre {
+            background-color: #f4f4f4;
+            padding: 10px;
+        }
+        pre .key {
+            color: #008080;
+        }
+        pre .value {
+            color: #d2691e;
+        }
     </style>
 </head>
 
@@ -94,85 +110,89 @@
 
             <table border="1" cellspacing="0" cellpadding="0" width="100%">
                 <tr class="bg">
-                    <td colspan="5" th:text="${table.tag}"></td>
+                    <td colspan="12" th:text="${table.tag}"></td>
                 </tr>
                 <tr>
-                    <td width="25%">接口描述</td>
-                    <td colspan="4" th:text="${table.description}"></td>
+                    <td class="bg2" colspan="2">接口地址</td>
+                    <td colspan="6" th:text="${table.url}"></td>
+                    <td class="bg2" colspan="2">调用方式</td>
+                    <td colspan="2" th:text="${table.requestType}"></td>
                 </tr>
                 <tr>
-                    <td>URL</td>
-                    <td colspan="4" th:text="${table.url}"></td>
+                    <td class="bg2" colspan="2">调用方</td>
+                    <td colspan="10" th:text="运营前端"></td>
                 </tr>
                 <tr>
-                    <td>请求方式</td>
-                    <td colspan="4" th:text="${table.requestType}"></td>
+                    <td class="bg2" colspan="2">接口描述</td>
+                    <td colspan="10" th:text="${table.description}"></td>
                 </tr>
                 <tr>
-                    <td>请求类型</td>
-                    <td colspan="4" th:text="${table.requestForm}"></td>
+                    <td class="bg2" colspan="12">请求数据</td>
                 </tr>
-                <tr>
-                    <td>返回类型</td>
-                    <td colspan="4" th:text="${table.responseForm}"></td>
-                </tr>
-
                 <tr class="bg">
-                    <td>参数名</td>
-                    <td width="15%">数据类型</td>
-                    <td width="15%">参数类型</td>
-                    <td width="15%">是否必填</td>
-                    <td width="29%">说明</td>
+                    <td colspan="2">序号</td>
+                    <td colspan="2">字段名</td>
+                    <td colspan="2" width="15%">字段</td>
+                    <td colspan="2" width="15%">类型</td>
+                    <td colspan="2" width="15%">必填</td>
+                    <td colspan="2" width="29%">备注</td>
                 </tr>
 
                 <th:block th:each="request, c:${table.requestList}">
-                    <tr>
-                        <td align="left" th:text="${c.count} + '.' + ${request.name}"></td>
-                        <td th:text="${request.type}"></td>
-                        <td th:text="${request.paramType}"></td>
-                        <td th:if="${request.require}" th:text="Y"></td>
-                        <td th:if="${!request.require}" th:text="N"></td>
-                        <td th:text="${request.remark}"></td>
-                        <!--                        <td th:if="${request.modelAttr}" th:text="asdfagadfg"></td>-->
-                    </tr>
+                    <!--                    <tr>-->
+                    <!--                        <td colspan="2" align="left" th:text="${c.count} + '.' + ${request.name}"></td>-->
+                    <!--                        <td colspan="2" th:text="${request.type}"></td>-->
+                    <!--                        <td colspan="2" th:text="${request.paramType}"></td>-->
+                    <!--                        <td colspan="2" th:text="${request.remark}"></td>-->
+                    <!--                        <td colspan="2" th:if="${request.require}" th:text="Y"></td>-->
+                    <!--                        <td colspan="2" th:if="${!request.require}" th:text="N"></td>-->
+                    <!--                        <td colspan="2" th:text="${request.remark}"></td>-->
+                    <!--                        &lt;!&ndash;                        <td th:if="${request.modelAttr}" th:text="asdfagadfg"></td>&ndash;&gt;-->
+                    <!--                    </tr>-->
                     <th:block th:if="${request.modelAttr}">
-                        <tbody th:include="this::request(${request.modelAttr.properties},${c.count} + '.', 1)"/>
+                        <tbody th:include="this::request(${request.modelAttr.properties},'', 1)"/>
                     </th:block>
 
-
                 </th:block>
+                <tr th:if="${#lists.isEmpty(table.requestList)}">
+                    <td colspan="2"></td>
+                    <td colspan="2"></td>
+                    <td colspan="2"></td>
+                    <td colspan="2"></td>
+                    <td colspan="2"></td>
+                    <td colspan="2"></td>
+                </tr>
 
+                <tr>
+                    <td class="bg2" colspan="12">请求示例</td>
+                </tr>
+                <tr class="specialHeight">
+                    <td colspan="12"><pre th:text="${table.requestParam}" style="white-space: pre"></pre></td>
+<!--                    <td colspan="12"><p th:text="${#strings.unescapeJava(#strings.replace(#strings.escapeJava(table.requestParam),'\n','<w:br/>'))}"></p></td>-->
+
+                </tr>
+                <tr>
+                    <td class="bg2" colspan="12">响应数据</td>
+                </tr>
                 <tr class="bg">
-                    <td>状态码</td>
-                    <td colspan="2">描述</td>
-                    <td colspan="2">说明</td>
+                    <td colspan="2">序号</td>
+                    <td colspan="2">字段名</td>
+                    <td colspan="2" width="15%">字段</td>
+                    <td colspan="2" width="15%">类型</td>
+                    <td colspan="2" width="15%">必填</td>
+                    <td colspan="2" width="29%">备注</td>
                 </tr>
 
-                <tr th:each="response:${table.responseList}">
-                    <td th:text="${response.name}"></td>
-                    <td colspan="2" th:text="${response.description}"></td>
-                    <td colspan="2" th:text="${response.remark}"></td>
-                </tr>
-
-                <tr class="bg">
-                    <td>返回属性名</td>
-                    <td colspan="2">类型</td>
-                    <td colspan="2">说明</td>
-                </tr>
-
-<!--               对返回参数 递归生成行-->
+                <!--               对返回参数 递归生成行-->
                 <tbody th:include="this::response(${table.modelAttr.properties},'', 1)"/>
 
                 <tr class="bg">
-                    <td colspan="5">示例</td>
+                    <td class="bg2" colspan="12">响应示例</td>
                 </tr>
                 <tr class="specialHeight">
-                    <td class="bg">请求参数</td>
-                    <td colspan="4" th:text="${table.requestParam}"></td>
-                </tr>
-                <tr class="specialHeight">
-                    <td class="bg">返回值</td>
-                    <td colspan="4" th:text="${table.responseParam}"></td>
+<!--                    <td colspan="12"><p th:text="${#strings.unescapeJava(#strings.replace(#strings.escapeJava(table.responseParam),'\n','<w:br/>'))}"></p></td>-->
+                    <td colspan="12"><pre th:text="${table.responseParam}" style="white-space: pre"></pre></td>
+
                 </tr>
 
             </table>
@@ -183,29 +203,56 @@
 <th:block th:fragment="request(properties,count, lv)">
     <th:block th:each="p,c : ${properties}">
         <tr>
-            <td align="left" th:text="${count} + '' + ${c.count} + '.' + ${p.name}"
+            <!--            <td align="left" th:text="${count} + '' + ${c.count} + '.' + ${p.name}"-->
+            <!--                th:style="|padding-left:${10*lv}px|"></td>-->
+            <!--            <td th:text="${p.type}"></td>-->
+            <!--            <td></td>-->
+            <!--            <td th:if="${p.require}" th:text="Y"></td>-->
+            <!--            <td th:if="${!p.require}" th:text="N"></td>-->
+            <!--            <td th:text="${p.description}"></td>-->
+            <td colspan="2" align="left" th:text=" ${count} + '' + ${c.count} "
                 th:style="|padding-left:${10*lv}px|"></td>
-            <td th:text="${p.type}"></td>
-            <td></td>
-            <td th:if="${p.require}" th:text="Y"></td>
-            <td th:if="${!p.require}" th:text="N"></td>
-            <td th:text="${p.description}"></td>
+            <td colspan="2" th:text="${p.description}"></td>
+            <td colspan="2" th:text="${p.name}"></td>
+            <td colspan="2" th:text="${p.type}"></td>
+            <td colspan="2" th:if="${p.require}" th:text="T"></td>
+            <td colspan="2" th:if="${!p.require}" th:text="F"></td>
+            <td colspan="2" th:text="${p.remark}"></td>
         </tr>
+
+        <tr th:if="${#strings.contains(p.type,'<')}">
+            <td colspan="12"  th:text="${#strings.substringBefore( #strings.substringAfter(p.type,'<'),'>')}"></td>
+        </tr>
+<!--        <th:block th:unless="${#lists.isEmpty(p.properties)}"-->
+<!--                  th:include="this::request(${p.properties},${count} + '' + ${c.count} + '.',${lv+1})"/>     -->
         <th:block th:unless="${#lists.isEmpty(p.properties)}"
-                  th:include="this::request(${p.properties},${count} + '' + ${c.count} + '.',${lv+1})"/>
+                  th:include="this::request(${p.properties},'',${lv+1})"/>
     </th:block>
 </th:block>
 
 <th:block th:fragment="response(properties,count, lv)">
     <th:block th:each="p,c : ${properties}">
+<!--        <tr  th:if="${p.name} ne 'code'   and  ${p.name} ne 'message' and  ${p.name} ne 'data'">-->
         <tr>
-            <td align="left" th:text="${count} + '' + ${c.count} + '.' + ${p.name}"
+            <!--            <td align="left" th:text="${count} + '' + ${c.count} + '.' + ${p.name}"-->
+            <td colspan="2" align="left" th:text=" ${count} + '' + ${c.count} "
                 th:style="|padding-left:${10*lv}px|"></td>
-            <td colspan="2" th:text="${p.type}"></td>
             <td colspan="2" th:text="${p.description}"></td>
+            <td colspan="2" th:text="${p.name}"></td>
+            <td colspan="2" th:text="${p.type}"></td>
+            <td colspan="2" th:if="${p.require}" th:text="T"></td>
+            <td colspan="2" th:if="${!p.require}" th:text="F"></td>
+            <td colspan="2" th:text="${p.remark}"></td>
         </tr>
+
+        <tr th:if="${#strings.contains(p.type,'<')}">
+            <td colspan="12"  th:text="${#strings.substringBefore( #strings.substringAfter(p.type,'<'),'>')}"></td>
+        </tr>
+
+<!--        <th:block th:unless="${#lists.isEmpty(p.properties)}"-->
+<!--                  th:include="this::response(${p.properties},${count} + '' + ${c.count} + '.',${lv+1})"/>-->
         <th:block th:unless="${#lists.isEmpty(p.properties)}"
-                  th:include="this::response(${p.properties},${count} + '' + ${c.count} + '.',${lv+1})"/>
+                  th:include="this::response(${p.properties},'',${lv+1})"/>
     </th:block>
 </th:block>
 </body>

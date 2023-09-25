@@ -1,5 +1,6 @@
 package org.word.service.impl;
 
+import cn.hutool.json.JSONUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -38,7 +39,7 @@ public class WordServiceImpl implements WordService {
         try {
             String jsonStr = restTemplate.getForObject(swaggerUrl, String.class);
             resultMap = tableListFromString(jsonStr);
-            log.debug(JsonUtils.writeJsonStr(resultMap));
+            log.debug(JSONUtil.toJsonPrettyStr(resultMap));
         } catch (Exception e) {
             log.error("parse error", e);
         }
@@ -55,7 +56,7 @@ public class WordServiceImpl implements WordService {
             resultMap.put("tableMap", new TreeMap<>(tableMap));
             resultMap.put("info", map.get("info"));
 
-            log.debug(JsonUtils.writeJsonStr(resultMap));
+            log.debug(JSONUtil.toJsonPrettyStr(resultMap));
         } catch (Exception e) {
             log.error("parse error", e);
         }
@@ -69,7 +70,7 @@ public class WordServiceImpl implements WordService {
         try {
             String jsonStr = new String(jsonFile.getBytes());
             resultMap = tableListFromString(jsonStr);
-            log.debug(JsonUtils.writeJsonStr(resultMap));
+            log.debug(JSONUtil.toJsonPrettyStr(resultMap));
         } catch (Exception e) {
             log.error("parse error", e);
         }
@@ -142,7 +143,7 @@ public class WordServiceImpl implements WordService {
                     table.setDescription(description);
                     table.setRequestForm(requestForm);
                     table.setResponseForm(responseForm);
-                    table.setRequestType(requestType);
+                    table.setRequestType(StringUtils.upperCase(requestType));
                     table.setRequestList(processRequestList(parameters, definitinMap));
                     table.setResponseList(processResponseCodeList(responses));
 
@@ -288,12 +289,16 @@ public class WordServiceImpl implements WordService {
      */
     private List<Request> processRequestList(List<LinkedHashMap> parameters, Map<String, ModelAttr> definitinMap) {
         List<Request> requestList = new ArrayList<>();
+        List<Request> requestList2 = new ArrayList<>();
         if (!CollectionUtils.isEmpty(parameters)) {
             for (Map<String, Object> param : parameters) {
                 Object in = param.get("in");
                 Request request = new Request();
                 request.setName(String.valueOf(param.get("name")));
-                request.setType(param.get("type") == null ? "object" : param.get("type").toString());
+                request.setType(param.get("type") == null ? "Object" : param.get("type").toString());
+                if (Objects.equals(request.getType(), "array")) {
+                    request.setType("List");
+                }
                 if (param.get("format") != null) {
                     request.setType(request.getType() + "(" + param.get("format") + ")");
                 }
@@ -304,12 +309,12 @@ public class WordServiceImpl implements WordService {
                     Map<String, Object> schema = (Map) param.get("schema");
                     Object ref = schema.get("$ref");
                     // 数组情况另外处理
-                    if (schema.get("type") != null && "array".equals(schema.get("type"))) {
+                    if (schema.get("type") != null && "List".equals(schema.get("type"))) {
                         ref = ((Map) schema.get("items")).get("$ref");
-                        request.setType("array");
+                        request.setType("List");
                     }
                     if (ref != null) {
-                        request.setType(request.getType() + ":" + ref.toString().replaceAll("#/definitions/", ""));
+                        request.setType(request.getType() + "<" + ref.toString().replaceAll("#/definitions/", "") + ">");
                         request.setModelAttr(definitinMap.get(ref));
                     }
                 }
@@ -320,9 +325,16 @@ public class WordServiceImpl implements WordService {
                 }
                 // 参数说明
                 request.setRemark(String.valueOf(param.get("description")));
-                requestList.add(request);
+
+                if (in != null && "body".equals(in)) {
+                    requestList2.add(request);
+                } else {
+
+                    requestList.add(request);
+                }
             }
         }
+        requestList.addAll(requestList2);
         return requestList;
     }
 
@@ -365,7 +377,7 @@ public class WordServiceImpl implements WordService {
         String type = (String) schema.get("type");
         String ref = null;
         //数组
-        if ("array".equals(type)) {
+        if ("List".equals(type)) {
             Map<String, Object> items = (Map<String, Object>) schema.get("items");
             if (items != null && items.get("$ref") != null) {
                 ref = (String) items.get("$ref");
@@ -463,6 +475,7 @@ public class WordServiceImpl implements WordService {
         Iterator<Entry<String, Object>> mIt = modeProperties.entrySet().iterator();
 
         List<ModelAttr> attrList = new ArrayList<>();
+        List<ModelAttr> attrList1 = new ArrayList<>();
 
         //解析属性
         while (mIt.hasNext()) {
@@ -474,8 +487,20 @@ public class WordServiceImpl implements WordService {
             if (attrInfoMap.get("format") != null) {
                 child.setType(child.getType() + "(" + attrInfoMap.get("format") + ")");
             }
-            child.setType(StringUtils.defaultIfBlank(child.getType(), "object"));
-
+            child.setType(StringUtils.defaultIfBlank(child.getType(), "Object"));
+            if (Objects.equals(child.getType(), "string")) {
+                child.setType("String");
+            } else if (Objects.equals(child.getType(), "string(date-time)")) {
+                child.setType("Date");
+            } else if (Objects.equals(child.getType(), "integer(int64)")) {
+                child.setType("Long");
+            } else if (Objects.equals(child.getType(), "integer(int32)")) {
+                child.setType("Integer");
+            } else if (Objects.equals(child.getType(), "array")) {
+                child.setType("List");
+            } else if (Objects.equals(child.getType(), "number")) {
+                child.setType("BigDecimal");
+            }
             Object ref = attrInfoMap.get("$ref");
             Object items = attrInfoMap.get("items");
             if (ref != null || (items != null && (ref = ((Map) items).get("$ref")) != null)) {
@@ -487,11 +512,22 @@ public class WordServiceImpl implements WordService {
                 if (refModel != null) {
                     child.setProperties(refModel.getProperties());
                 }
-                child.setType(child.getType() + ":" + clsName);
+                child.setType(child.getType() + "<" + clsName + ">");
             }
             child.setDescription((String) attrInfoMap.get("description"));
-            attrList.add(child);
+            if (StringUtils.isNotEmpty(child.getDescription()) && child.getDescription().trim().contains(" ")) {
+                String description = child.getDescription().trim();
+                child.setDescription(description.substring(0, description.indexOf(" ")));
+                child.setRemark(description.substring(description.indexOf(" ")));
+            }
+            if (ref != null || (items != null && (ref = ((Map) items).get("$ref")) != null)) {
+                attrList1.add(child);
+            } else {
+                attrList.add(child);
+            }
         }
+        attrList.addAll(attrList1);
+
         return attrList;
     }
 
@@ -507,7 +543,7 @@ public class WordServiceImpl implements WordService {
             String type = (String) schema.get("type");
             String ref = null;
             // 数组
-            if ("array".equals(type)) {
+            if ("List".equals(type)) {
                 Map<String, Object> items = (Map<String, Object>) schema.get("items");
                 if (items != null && items.get("$ref") != null) {
                     ref = (String) items.get("$ref");
@@ -524,7 +560,7 @@ public class WordServiceImpl implements WordService {
                     for (ModelAttr subModelAttr : modelAttr.getProperties()) {
                         responseMap.put(subModelAttr.getName(), getValue(subModelAttr.getType(), subModelAttr));
                     }
-                    return JsonUtils.writeJsonStr(responseMap);
+                    return JSONUtil.toJsonPrettyStr(responseMap).replaceAll("\n", "\n");
                 }
             }
         }
@@ -573,10 +609,12 @@ public class WordServiceImpl implements WordService {
         if (!jsonMap.isEmpty()) {
             if (jsonMap.size() == 1) {
                 for (Entry<String, Object> entry : jsonMap.entrySet()) {
-                    res += " -d '" + JsonUtils.writeJsonStr(entry.getValue()) + "'";
+//                    res += " -d '" + JSONUtil.toJsonPrettyStr(entry.getValue()) + "'";
+                    res += JSONUtil.toJsonPrettyStr(entry.getValue()).replaceAll("\n", "\n");
                 }
             } else {
-                res += " -d '" + JsonUtils.writeJsonStr(jsonMap) + "'";
+//                res += " -d '" + JSONUtil.toJsonPrettyStr(jsonMap) + "'";
+                res += JSONUtil.toJsonPrettyStr(jsonMap).replaceAll("\n", "\n");
             }
         }
         return res;
@@ -591,25 +629,31 @@ public class WordServiceImpl implements WordService {
      */
     private Object getValue(String type, ModelAttr modelAttr) {
         int pos;
-        if ((pos = type.indexOf(":")) != -1) {
+        if ((pos = type.indexOf("<")) != -1) {
             type = type.substring(0, pos);
         }
         switch (type) {
             case "string":
+            case "String":
                 return "string";
             case "string(date-time)":
-                return "2020/01/01 00:00:00";
+            case "Date":
+                return "2023/01/01 00:00:00";
             case "integer":
             case "integer(int64)":
             case "integer(int32)":
+            case "Integer":
+            case "Long":
                 return 0;
-            case "number":
+            case "Number":
+            case "BigDecimal":
                 return 0.0;
-            case "boolean":
+            case "Boolean":
                 return true;
+            case "File":
             case "file":
                 return "(binary)";
-            case "array":
+            case "List":
                 List list = new ArrayList();
                 Map<String, Object> map = new LinkedHashMap<>();
                 if (modelAttr != null && !CollectionUtils.isEmpty(modelAttr.getProperties())) {
@@ -619,7 +663,16 @@ public class WordServiceImpl implements WordService {
                 }
                 list.add(map);
                 return list;
-            case "object":
+            case "Object":
+                map = new LinkedHashMap<>();
+                if (modelAttr != null && !CollectionUtils.isEmpty(modelAttr.getProperties())) {
+                    for (ModelAttr subModelAttr : modelAttr.getProperties()) {
+                        map.put(subModelAttr.getName(), getValue(subModelAttr.getType(), subModelAttr));
+                    }
+                }
+                return map;
+            case "body":
+            case "Body":
                 map = new LinkedHashMap<>();
                 if (modelAttr != null && !CollectionUtils.isEmpty(modelAttr.getProperties())) {
                     for (ModelAttr subModelAttr : modelAttr.getProperties()) {
@@ -662,7 +715,7 @@ public class WordServiceImpl implements WordService {
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             sBuilder.append("--header '");
             sBuilder.append(entry.getKey() + ":" + entry.getValue());
-            sBuilder.append("'");
+            sBuilder.append("'\n");
         }
         return sBuilder.toString();
     }
