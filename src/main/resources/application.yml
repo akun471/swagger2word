@@ -24,7 +24,8 @@ spring:
 # Swagger json url address
 # etc. https://petstore.swagger.io/
 #swagger.url: https://petstore.swagger.io/v2/swagger.json
-swagger.url: http://91.92.71.140:9529/v2/api-docs
+#swagger.url: http://91.92.71.140:9529/v2/api-docs
+swagger.url: http://localhost:9010/v2/api-docs
 
 
 
